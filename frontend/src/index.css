@@ -1,0 +1,47 @@
+
+@import 'tailwindcss';
+body,head{
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+.center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.primary-p{
+  @apply p-4 md:p-6 lg:p-8;
+}
+.Toastify__toast-container {
+
+  @apply flex items-center justify-center;
+
+  .Toastify__toast-theme--light {
+      /* // background: #101029c2;
+      //     color: white; */
+  }
+
+  .Toastify__toast {
+      @media screen and (max-width: 768px) {
+        top: -20px;
+        width: 300px;
+        /* // left: 50%;
+        // transform: translate(-50%); */
+        border-radius: 10px;
+        background: #101029;
+        color: white;
+        text-transform: capitalize;
+        
+      }
+
+  }
+  .Toastify__close-button{
+      color: #e4fbff;
+
+  }
+}
+
+.canvas-controls {
+  @apply absolute bottom-4 gap-2 left-1/2 -translate-x-1/2  p-3 rounded-xl flex items-center gap-3 z-100;
+}
