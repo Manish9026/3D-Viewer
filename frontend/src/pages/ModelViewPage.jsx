@@ -261,9 +261,9 @@ function ModelViewer({ file, setObjectRef }) {
     
     const file=await exportModel({object:objectRef,isDownload:true,fileName:"",format:"stl",isFile:true});
     console.log(file);
-    let formData=new FormData();
-    formData.append("file",file);
-   await  uploadFile(formData);
+  //   let formData=new FormData();
+  //   formData.append("file",file);
+  //  await  uploadFile(formData);
 
     
   }

@@ -7,7 +7,9 @@ import { Camera,Model } from '../controllers/ModelController.js';
 
 
 import multer from 'multer'
-export const upload = multer({ dest: "uploads/" });
+import { upload } from '../utils/multerConfig.js';
+// import { upload } from '../utils/cloudinary.js';
+// export const upload = multer({ dest: "uploads/" });
 
 // 3D Model routes
 router.post('/upload',verifyUser,upload.single("file"),Model.uploadModel);
