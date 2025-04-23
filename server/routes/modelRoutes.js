@@ -13,7 +13,7 @@ import { upload } from '../utils/multerConfig.js';
 
 // 3D Model routes
 router.post('/upload',verifyUser,upload.single("file"),Model.uploadModel);
-router.get('/getModel',verifyUser,Model.getModel);
+router.get('/',verifyUser,Model.getModel);
 router.delete('/deleteModel',verifyUser,Model.deleteModel);
 
 // camera position routes

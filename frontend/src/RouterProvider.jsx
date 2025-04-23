@@ -1,4 +1,4 @@
-import React,{ useState ,useEffect} from 'react'
+import React,{ useState ,useEffect, Suspense} from 'react'
 
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
@@ -11,13 +11,13 @@ const Registration =React.lazy(() => import('./pages/AuthPages').then(module => 
 // import Upload from './pages/Upload';
 const Upload = React.lazy(() => import('./pages/Upload'));
 const Home =React.lazy(()=>import('./pages/Home'));
-
+const ModelGallery=React.lazy(()=>import('./pages/ModelPage'))
 
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from 'react-redux';
 
 const ModelViewPage=React.lazy(()=>import('./pages/ModelViewPage'));
-const ProtectedRouteList=[{path:"/upload"}]
+const ProtectedRouteList=[{path:"/upload"},{path:"/models"}]
 
 const ProtectedRoute = ({ allowedRoles ,children},) => {
   // const { isAuthenticated, role } = getUser();
@@ -120,6 +120,10 @@ export function RoutesProvider() {
 
           },
           {
+            path:"models",
+            element:<ProtectedRoute><ModelGallery/></ProtectedRoute>
+          },
+          {
             path:"*",
             element:<NotFoundPage/>
           }
@@ -129,7 +133,8 @@ export function RoutesProvider() {
       
       }])
 
-   return  <RouterProvider router={router}  fallbackElement={<p>Loading...</p>}/>
+   return  <RouterProvider router={router}  fallbackElement={<Suspense fallback={<span className='center bg-red-500 w-full h-full'>Loading...</span>}>
+    </Suspense>}/>
 
     }
 

@@ -29,11 +29,14 @@ const modelApi = createApi({
             }),
             async onQueryStarted(arg, { dispatch, queryFulfilled }) {
                 try {
-                    const { data } = await queryFulfilled
-                    notify({ message: "Model Uploaded", type: "success", status: data?.status })
+                    const { data } = await queryFulfilled;
+                    console.log(data,"data");
+                    
+                    notify({ message: data?.message || "Model Uploaded", type: "success", status: data?.status })
                 } catch (err) {
+                    const {data}=err?.error
                     console.log(err);
-                    notify({ message: "something wrong !!", type: "error", status: err?.status })
+                    notify({ message:data?.message || "something wrong !!", type: "error", status: data?.status })
                 }
             }
         }),
@@ -81,5 +84,5 @@ const modelApi = createApi({
     })
 })
 
-export const { useSetCameraPositionMutation, useFetchCameraPositionQuery ,useUploadModelMutation} = modelApi
+export const { useSetCameraPositionMutation, useFetchCameraPositionQuery ,useUploadModelMutation,useGetModelsQuery} = modelApi
 export { modelApi };

@@ -21,7 +21,7 @@ modelType:{
     required: true,
 },
 
-    fileSize:{
+fileSize:{
         type:Number
     },
 
@@ -33,6 +33,7 @@ bucketName:{
         required: true,
         default:""
     },
+signature:String   
 },{timestamps:true});
 export const model3dModel=mongoose.model("models",modelSchema);
 

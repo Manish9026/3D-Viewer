@@ -6,7 +6,7 @@ import Button from '../components/Button.jsx';
 
 const Home = () => {
   return (
-    <div className="min-h-screen primary-p flex flex-col">
+    <div className="min-h-screen center primary-p flex flex-col">
       {/* Header */}
       {/* <header className="container py-6">
         <nav className="flex justify-between items-center">
@@ -35,13 +35,13 @@ const Home = () => {
           </p>
           <div className="flex flex-col items-center sm:flex-row gap-4 justify-center pt-4 ">
             <Link to="/upload">
-              <Button  className="flex gap-2 group flex-1 sm:min-w-[200px] items-center justify-center h-[60px]">
+              <Button  className="flex gap-2 group flex-1 sm:min-w-[200px] min-w-[200px] items-center justify-center h-[60px]">
                 Get Started
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link to="/model/view">
-              <Button variant="outline" size="md" className="flex gap-2 group flex-1 max-w-[200px] h-[50px]">
+              <Button variant="outline" size="md" className="flex gap-2 group min-w-[150px] flex-1 max-w-[200px] h-[50px]">
                 Try Demo
               </Button>
             </Link>

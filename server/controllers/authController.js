@@ -83,14 +83,14 @@ export class Auth  {
         res.cookie("accessToken", accessToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "None",
+          sameSite: process.env.PRODUCTION==="local"?"Strict":"None",
           maxAge: 15 * 60 * 1000,
         });
       
         res.cookie("refreshToken", refreshToken, {
           httpOnly: true,
           secure: true,
-          sameSite: "None",
+          sameSite: process.env.PRODUCTION==="local"?"Strict":"None",
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
       
@@ -140,14 +140,14 @@ console.log(token,ip,userAgent);
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "None",
+      sameSite: process.env.PRODUCTION==="local"?"Strict":"None",
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: "None",
+      sameSite: process.env.PRODUCTION==="local"?"Strict":"None",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -169,8 +169,14 @@ console.log(token,ip,userAgent);
       await user.save();
     }
   
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: process.env.PRODUCTION==="local"?"Strict":"None",});
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: process.env.PRODUCTION==="local"?"Strict":"None",});
   
     goodResponse({res,statusCode:200,message:"Logged out successfully",data:{isAuthenticated:false}})
     // res.status(200).json({ message: "Logged out successfully" });

@@ -1,4 +1,4 @@
-import React,{useState,Suspense,useEffect, useRef} from 'react'
+import React, { useState, Suspense, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber';
 import {
   OrbitControls,
@@ -16,30 +16,31 @@ import * as THREE from 'three';
 import { FaCloudDownloadAlt } from "react-icons/fa";
 import { useSelector } from 'react-redux';
 import useReactHooks from '../hooks/useReactHooks.jsx';
-import { 
-  RotateCw, 
-  ZoomIn, 
-  Move, 
-  Save, 
-  Undo, 
+import {
+  RotateCw,
+  ZoomIn,
+  Move,
+  Save,
+  Undo,
   Upload,
   Camera,
-  Home
+  Home,
+  Download, CheckCircle2
 } from "lucide-react";
-// lazy load the components
-
-const Button=React.lazy(()=>import('../components/Button.jsx'));
-const LockComponent=React.lazy(()=>import('../components/LockComponent.jsx'));
-const ToolPanel=React.lazy(()=>import('../components/ToolPanel.jsx'));
-
 
 import { useThree } from '@react-three/fiber';
 import { toast } from 'react-toastify';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
+// lazy load the components
+const Button = React.lazy(() => import('../components/Button.jsx'));
+const LockComponent = React.lazy(() => import('../components/LockComponent.jsx'));
+const ToolPanel = React.lazy(() => import('../components/ToolPanel.jsx'));
 import { TabContainer } from '../components/TabContainer.jsx';
 import CameraTab from '../components/cameraComponent.jsx';
+import { FileSaver } from '../components/LoadingComponent.jsx';
+// functions or methods
 import { exportModel } from '../utils/modelBlobExport.js';
 import { useUploadModelMutation } from '../services/modelServices.jsx';
-
 const CameraUpdater = ({ cameraState }) => {
   const { camera } = useThree();
 
@@ -58,13 +59,13 @@ const CameraUpdater = ({ cameraState }) => {
 
 function ModelViewer({ file, setObjectRef }) {
   const [object, setObject] = useState(null);
-    
+
   useEffect(() => {
     if (!file) return;
 
     // const extension = file.name.split('.').pop().toLowerCase();
     // const url = URL.createObjectURL(file);
-    const extension=file.extension;
+    const extension = file.extension;
     const url = file.url;
 
     let loader;
@@ -72,7 +73,11 @@ function ModelViewer({ file, setObjectRef }) {
     switch (extension) {
       case 'glb':
       case 'gltf':
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('/draco/'); // make sure to place decoder files here
         loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+
         loader.load(url, (gltf) => {
           const obj = gltf.scene;
           setObject(obj);
@@ -94,14 +99,14 @@ function ModelViewer({ file, setObjectRef }) {
         });
         break;
       case 'stl':
-          loader = new STLLoader();
-          loader.load(url, (geometry) => {
-            const material = new MeshStandardMaterial({ color: 0xaaaaaa });
-            const mesh = new Mesh(geometry, material);
-            setObject(mesh);
-            setObjectRef(mesh);
-          });
-          break;
+        loader = new STLLoader();
+        loader.load(url, (geometry) => {
+          const material = new MeshStandardMaterial({ color: 0xaaaaaa });
+          const mesh = new Mesh(geometry, material);
+          setObject(mesh);
+          setObjectRef(mesh);
+        });
+        break;
       default:
         alert('Unsupported format');
         break;
@@ -116,24 +121,25 @@ function ModelViewer({ file, setObjectRef }) {
     </Center>
   ) : null;
 }
- function ModelPanel() {
+function ModelPanel() {
   // const [file, setFile] = useState(null);
   const [objectRef, setObjectRef] = useState(null);
   const [history, setHistory] = useState([]);
   const [future, setFuture] = useState([]);
-  const {modelFile}=useSelector((state)=>state.viewer);
-  const [uploadFile,{isLoading}]=useUploadModelMutation();
-  const {navigate}=useReactHooks();
-  const {isAuthenticated}=useSelector((state)=>state.authReducer);
+  const { modelFile } = useSelector((state) => state.viewer);
+  const [uploadFile, { isLoading, isSuccess, isError }] = useUploadModelMutation();
+  const { navigate } = useReactHooks();
+  const { isAuthenticated } = useSelector((state) => state.authReducer);
   const [currentTool, setCurrentTool] = useState("rotate");
   const cameraRef = useRef(null);
+  const [downloadLoading, setDownloadLoading] = useState(false)
   const [cameraState, setCameraState] = useState({
     position: { x: 2, y: 2, z: 5 },
     rotation: { x: 5, y: 2, z: 5 },
     zoom: 1,
     fov: 60,
   });
-  
+
 
   const handleFileUpload = (e) => {
     e.preventDefault();
@@ -197,10 +203,10 @@ function ModelViewer({ file, setObjectRef }) {
   };
   const handleUndo = () => {
     if (history.length === 0 || !objectRef) return;
-  
+
     const prev = history[history.length - 1];
     const newHistory = history.slice(0, history.length - 1);
-  
+
     const current = {
       position: objectRef.position.clone(),
       rotation: objectRef.rotation.clone(),
@@ -209,10 +215,10 @@ function ModelViewer({ file, setObjectRef }) {
         child.isMesh ? child.material.color.clone() : null
       ),
     };
-  
+
     setHistory(newHistory);
     setFuture((prev) => [...prev, current]);
-  
+
     objectRef.position.copy(prev.position);
     objectRef.rotation.copy(prev.rotation);
     objectRef.scale.copy(prev.scale);
@@ -224,10 +230,10 @@ function ModelViewer({ file, setObjectRef }) {
   };
   const handleRedo = () => {
     if (future.length === 0 || !objectRef) return;
-  
+
     const next = future[future.length - 1];
     const newFuture = future.slice(0, future.length - 1);
-  
+
     const current = {
       position: objectRef.position.clone(),
       rotation: objectRef.rotation.clone(),
@@ -236,10 +242,10 @@ function ModelViewer({ file, setObjectRef }) {
         child.isMesh ? child.material.color.clone() : null
       ),
     };
-  
+
     setHistory((prev) => [...prev, current]);
     setFuture(newFuture);
-  
+
     objectRef.position.copy(next.position);
     objectRef.rotation.copy(next.rotation);
     objectRef.scale.copy(next.scale);
@@ -249,23 +255,31 @@ function ModelViewer({ file, setObjectRef }) {
       }
     });
   };
-  const handleSave=()=>{
-    console.log(objectRef,cameraRef?.current?.position,cameraState);
-    
+  const handleSave = async () => {
+    const file = await exportModel({ object: objectRef, isDownload: false, fileName: "", isFile: true });
+    let formData = new FormData();
+    formData.append("file", file);
+    await uploadFile(formData);
+
   }
   const handleToolChange = (tool) => {
     setCurrentTool(tool);
     toast.success(`${tool.charAt(0).toUpperCase() + tool.slice(1)} tool selected`);
   }
-  const downloadFile = async(url) => {
-    
-    const file=await exportModel({object:objectRef,isDownload:true,fileName:"",format:"stl",isFile:true});
-    console.log(file);
-  //   let formData=new FormData();
-  //   formData.append("file",file);
-  //  await  uploadFile(formData);
+  const downloadFile = async (url) => {
 
-    
+    setDownloadLoading(true)
+    const file = await exportModel({ object: objectRef, isDownload: true, fileName: "", isFile: true });
+    console.log(file);
+    setDownloadLoading(false)
+    //   let formData=new FormData();
+    //   formData.append("file",file);
+    //  await  uploadFile(formData);
+
+
+  }
+  const saveFile = async () => {
+
   }
 
   return (
@@ -274,122 +288,131 @@ function ModelViewer({ file, setObjectRef }) {
 
       <label onClick={handleFileUpload} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded cursor-pointer">
         Upload 3D File (.glb, .obj, .fbx)
-      
+
       </label>
 
-      
+
 
       <div className="relative p-2 overflow-auto h-full flex   sm:flex-row flex-col  gap-3 w-full max-w-6xl rounded-lg max-h-[90vh] border border-gray-700 shadow-lg">
-      {/* <CameraController /> */}
-      
-        <span className=' flex min-h-[300px] flex-1 sm:max-h-[450px] max-h-[300px] items-center flex z-20 min-w-[200px] sm:min-w-[300px] rounded-md sticky top-0 overflow-hidden' >
-        <div className={`canvas-controls bg-slate-900 flex `}>
-              <Button
-                variant={currentTool === "rotate" ? "default" : "outline"}
-                size="icon"
-                onClick={() => handleToolChange("rotate")}
-                title="Rotate"
-              >
-                <RotateCw className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={currentTool === "zoom" ? "default" : "outline"}
-                size="icon"
-                onClick={() => handleToolChange("zoom")}
-                title="Zoom"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={currentTool === "pan" ? "default" : "outline"}
-                size="icon"
-                onClick={() => handleToolChange("pan")}
-                title="Pan"
-              >
-                <Move className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => {
-                  setCameraState({
-                    position: { x: 2, y: 2, z: 5 },
-                    rotation: { x: 5, y: 2, z: 5 },
-                    zoom: 1,
-                    fov: 60,
-                  })
-                }}
-                title="Reset View"
-              >
-                <Undo className="h-4 w-4" />
-              </Button>
-            </div>
-        <Canvas ref={cameraRef} className='' shadows 
-        // [2, 2, 5]
-        camera={{ position: [cameraState.position.x, cameraState.position.y, cameraState.position.z], fov: cameraState.fov,rotation: [cameraState.rotation.x, cameraState.rotation.y, cameraState.rotation.z],zoom: cameraState.zoom }}
+        {/* <CameraController /> */}
+        {isLoading && <FileSaver status={isSuccess ? "success" : isError ? "error" : "saving"} />}
 
-        >
+        <span className='scrol-hide flex min-h-[300px] flex-1 sm:max-h-[450px] max-h-[300px] items-center flex z-20 min-w-[200px] sm:min-w-[300px] rounded-md bg-slate-900 sticky top-0 overflow-hidden' >
+          <div className={`canvas-controls bg-slate-900 flex `}>
+            <Button
+              variant={currentTool === "rotate" ? "default" : "outline"}
+              size="icon"
+              onClick={() => handleToolChange("rotate")}
+              title="Rotate"
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={currentTool === "zoom" ? "default" : "outline"}
+              size="icon"
+              onClick={() => handleToolChange("zoom")}
+              title="Zoom"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={currentTool === "pan" ? "default" : "outline"}
+              size="icon"
+              onClick={() => handleToolChange("pan")}
+              title="Pan"
+            >
+              <Move className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setCameraState({
+                  position: { x: 2, y: 2, z: 5 },
+                  rotation: { x: 5, y: 2, z: 5 },
+                  zoom: 1,
+                  fov: 60,
+                })
+              }}
+              title="Reset View"
+            >
+              <Undo className="h-4 w-4" />
+            </Button>
+          </div>
+          <Canvas ref={cameraRef} className='' shadows
+            // [2, 2, 5]
+            camera={{ position: [cameraState.position.x, cameraState.position.y, cameraState.position.z], fov: cameraState.fov, rotation: [cameraState.rotation.x, cameraState.rotation.y, cameraState.rotation.z], zoom: cameraState.zoom }}
 
-          <ambientLight intensity={0.3} />
-          <directionalLight castShadow position={[10, 10, 5]} intensity={1} shadow-mapSize={1024} />
-          <OrbitControls enableZoom={currentTool=="zoom"} enablePan={currentTool=="pan"} enableRotate={currentTool=="rotate"}
-            onChange={(e) => {
+          >
+
+            <ambientLight intensity={0.3} />
+            <directionalLight castShadow position={[10, 10, 5]} intensity={1} shadow-mapSize={1024} />
+            <OrbitControls enableZoom={currentTool == "zoom"} enablePan={currentTool == "pan"} enableRotate={currentTool == "rotate"}
+              onChange={(e) => {
 
 
-    const cam = e.target.object;
+                const cam = e.target.object;
 
-    setCameraState({
-      position: cam.position,
-      rotation: {x:cam.rotation._x, y:cam.rotation._y, z:cam.rotation._z},
-      zoom: cam.zoom,
-      fov: cam.fov,
-    });
-  }}
-  />
-  
-          {/* <Environment preset="sunset" background /> */}
-          <Grid args={[20, 20]} cellColor="#555" sectionColor="#333" fadeDistance={95}  />
-          {/* <ContactShadows position={[0, -0.9, 0]} opacity={0.6} scale={10} blur={1} far={5} /> */}
+                setCameraState({
+                  position: cam.position,
+                  rotation: { x: cam.rotation._x, y: cam.rotation._y, z: cam.rotation._z },
+                  zoom: cam.zoom,
+                  fov: cam.fov,
+                });
+              }}
+            />
 
-          {/* <CameraTracker onUpdate={(state) =>{ setCameraState(state);console.log("hello");
+            {/* <Environment preset="sunset" background /> */}
+            <Grid args={[20, 20]} cellColor="#555" sectionColor="#333" fadeDistance={95} />
+            {/* <ContactShadows position={[0, -0.9, 0]} opacity={0.6} scale={10} blur={1} far={5} /> */}
+
+            {/* <CameraTracker onUpdate={(state) =>{ setCameraState(state);console.log("hello");
           }} />d */}
-          <CameraUpdater cameraState={cameraState} />
-          <Suspense fallback={null}>
-            {modelFile?.url && <ModelViewer file={modelFile} setObjectRef={setObjectRef} />}
-          </Suspense>
-        </Canvas>
+            <CameraUpdater cameraState={cameraState} />
+            <Suspense fallback={null}>
+              {modelFile?.url && <ModelViewer file={modelFile} setObjectRef={setObjectRef} />}
+            </Suspense>
+          </Canvas>
         </span>
-      
-        { modelFile?.url && (
-    isAuthenticated? <span className=''>
-      <TabContainer components={[{title:"Tools",element: <ToolPanel
-     onTransform={handleMove}
-     onRotate={handleRotate}
-     onScale={handleScale}
-     onChangeColor={handleChangeColor}
-     onUndo={handleUndo}
-     onRedo={handleRedo}
-     onReset={handleReset}
-   />},{title:"Cameras",element:<CameraTab onViewSelect={setCameraState} onSavePosition={cameraState}/>}]}/>
 
-   <span className='flex gap-2 p-2'>
-    <Button onClick={()=>downloadFile()} className="bg-green-400 hover:bg-blue-700 flex-1"><FaCloudDownloadAlt />Download</Button>
-    <Button onClick={()=>handleSave()} className="bg-blue-600 hover:bg-blue-700 flex-1">Save</Button>
+        {modelFile?.url && (
+          isAuthenticated ? <span className=''>
+            <TabContainer components={[{
+              title: "Tools", element: <ToolPanel
+                onTransform={handleMove}
+                onRotate={handleRotate}
+                onScale={handleScale}
+                onChangeColor={handleChangeColor}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                onReset={handleReset}
+              />
+            }, { title: "Cameras", element: <CameraTab onViewSelect={setCameraState} onSavePosition={cameraState} /> }]} />
 
-   </span>
-    </span>:<LockComponent className={"bg-slate-700 "} label='Tool panel locked' onLockClick={()=>{
-        navigate('/user/login')
-    }}/>
-      )}
+            <span className='flex gap-2 p-2'>
+              <Button onClick={() => downloadFile()} className="bg-green-400 flex hover:bg-blue-700 flex-1">{!downloadLoading ? (<span className='flex item-center gap-2'>
+                <FaCloudDownloadAlt /> Download</span>) :
+                (<span className='flex item-center gap-2'>
+                  <Download className="animate-bounce" size={18} />
+                  Downloading...
+                </span>)}
+              </Button>
+              <Button onClick={() => handleSave()} className="bg-blue-600 hover:bg-blue-700 flex-1">Save</Button>
+
+            </span>
+          </span> : <LockComponent className={"bg-slate-700 "} label='Tool panel locked' onLockClick={() => {
+            navigate('/user/login')
+          }} />
+        )}
       </div>
-     
+
     </div>
   );
 }
 
 const ModelViewPage = () => {
   return (
-   <ModelPanel/>
+    <ModelPanel />
   )
 }
 
