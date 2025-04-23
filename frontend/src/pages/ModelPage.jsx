@@ -9,7 +9,7 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Environment, useGLTF } from "@react-three/drei";
+import { OrbitControls, Environment, useGLTF, Center } from "@react-three/drei";
 import useReactHooks from "../hooks/useReactHooks";
 import { setModelUrl } from "../slices/viewerSlice";
 import { RxSize } from "react-icons/rx";
@@ -63,7 +63,7 @@ const Model = ({ url, extension, onLoad }) => {
     return null; // Render nothing while loading
   }
 
-  return <primitive object={model.scene || model} />;
+  return <Center><primitive object={model.scene || model} scale={0.8}  /></Center>;
 };
 
 const ModelViewer = ({ url }) => {
@@ -87,7 +87,10 @@ const ModelViewer = ({ url }) => {
         <Suspense fallback={<>loading....</>}>
           <ambientLight intensity={0.5} />
           <Environment preset="sunset" />
-          <Model url={url} extension={extension} onLoad={handleModelLoad} />
+          <Center>
+          <Model url={url} extension={extension} 
+          onLoad={handleModelLoad} />
+          </Center>
           <OrbitControls enableZoom={false} />
         </Suspense>
       </Canvas>
